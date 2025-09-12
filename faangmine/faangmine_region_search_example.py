@@ -9,21 +9,44 @@ More details on the region search, including the formats allowed for the genome
 coordinates, can be found here:
 https://faangmine.rnet.missouri.edu/faangmine/genomicRegionSearch.do
 
-For this demo, the search results are stored as 2D arrays, displayed as a 
-table, grouped by region. Each row is a feature, and the columns are the 
-feature attributes: primary identifier + symbol, type, analysis, location.
+For this demo, the search results are displayed as a table, grouped by region.
+The results are also stored as a list of results Rows for further processing. In that
+case, displaying the query results can be disabled by passing displayOutput=false to 
+region_search().
 """
 
-import sys
+import os, sys
+from dotenv import load_dotenv
+from intermine.webservice import Service
 sys.path.append("..")
 from region_search_faangmine.region_search_faangmine import region_search
 
-FAANGMINE_URL = "https://faangmine.rnet.missouri.edu/faangmine"
+MINE_URL = "https://faangmine.rnet.missouri.edu/faangmine"
 
+
+def get_API_key():
+    """Get API key from .env file.
+
+    Returns
+    -------
+    str
+        API key loaded from file
+    """
+
+    if(not load_dotenv()):
+        raise OSError("Unable to load API key; make sure .env file exists")
+
+    return os.getenv('API_KEY')
+    
 
 def main():
     print("FAANGMine region search demo\n")
     printSpacer()
+
+    # Uncomment below to use API key (recommended)
+    #service = Service(MINE_URL, token=get_API_key())
+    # Comment out below if using API key above
+    service = Service(MINE_URL)
 
     #--------------------------------------------------------------------------
     # Example 1
@@ -42,7 +65,24 @@ def main():
     # for details on accepted region string formats
     regions = ["1:580045..580045", "5:5001231..5010365"]
 
-    region_search(FAANGMINE_URL, org, features, regions)
+    results = region_search(service, org, features, regions)
+
+    # Further processing examples:
+    # Retrieve list of all primary identifiers from results:
+    primaryIds = [row["primaryIdentifier"] for row in results]
+    # Retreive list of gene ids from results:
+    geneIds = [row["primaryIdentifier"] for row in results if \
+               row["SequenceFeature.sequenceOntologyTerm.name"] == "gene"]
+    print("List of gene ids: " + ','.join(geneIds))
+    # Retrieve only RefSeq gene ids:
+    geneIds = [row["primaryIdentifier"] for row in results if \
+               row["SequenceFeature.sequenceOntologyTerm.name"] == "gene" \
+               and row["source"] == "RefSeq"]
+    print("List of RefSeq gene ids: " + ','.join(geneIds))
+    # Remove duplicates if any:
+    geneIds = list(set(geneIds))
+    print("List of unique RefSeq gene ids: " + ','.join(geneIds)) 
+
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -55,7 +95,7 @@ def main():
     # Selected assembly
     assembly = "ARS-UCD1.2"
 
-    region_search(FAANGMINE_URL, org, features, regions, assembly)
+    reuslts = region_search(service, org, features, regions, assembly)
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -73,7 +113,7 @@ def main():
     # Features need to match analyses, use checkboxes on webapp as guide
     features = ["OpenChromatinRegion"]
 
-    region_search(FAANGMINE_URL, org, features, regions, assembly, analyses)
+    results = region_search(service, org, features, regions, assembly, analyses)
 
     #--------------------------------------------------------------------------
     # Example 4
@@ -88,7 +128,7 @@ def main():
     extend = 30000
 
     # Pass empty set for analyses to search all
-    region_search(FAANGMINE_URL, org, features, regions, assembly, [], extend)
+    results = region_search(service, org, features, regions, assembly, [], extend)
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -96,12 +136,14 @@ def main():
     print("Example 5: Perform a strand-specific search on a single region.\n")
 
     # Strand: +
-    region_search(FAANGMINE_URL, org, features, regions, assembly, [], 0, True)
+    results = region_search(service, org, features, regions, assembly, [], 0, True)
 
     # Strand: -
     features = ["Exon", "Gene", "MRNA", "LncRNA"]
     regions = ["1:4990900..4943500"]
-    region_search(FAANGMINE_URL, org, features, regions, assembly, [], 0, True)
+    results = region_search(service, org, features, regions, assembly, [], 0, True)
+    # Set printOutput=False to skip printing results to screen, for example:
+    #results = region_search(service, org, features, regions, None, 0, True, False)
 
 
 def printSpacer():

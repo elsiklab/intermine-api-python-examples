@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import itertools
 from intermine.webservice import Service
 
-HMINE_URL = "https://hymenopteramine.rnet.missouri.edu/hymenopteramine"
+MINE_URL = "https://hymenopteramine.rnet.missouri.edu/hymenopteramine"
 
 
 def get_API_key():
@@ -36,7 +36,7 @@ def main():
     print("HymenopteraMine lists demo\n")
 
     # API key required to save lists to account
-    service = Service(HMINE_URL, token=get_API_key())
+    service = Service(MINE_URL, token=get_API_key())
 
     # Load identifiers from input file:
     identifiers = []
@@ -58,7 +58,7 @@ def main():
 
     # Run template, restricting gene IDs to those in newly created list:
     print("Running template: Gene ID --> Homologues")
-    print("See details at:", HMINE_URL + "/template.do?name=Gene_Orthologues")
+    print("See details at:", MINE_URL + "/template.do?name=Gene_Orthologues")
     template = service.get_template('Gene_Orthologues')
 
     # Constraint values:

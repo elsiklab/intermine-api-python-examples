@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 import itertools
 from intermine.webservice import Service
 
-HMINE_URL = "https://hymenopteramine.rnet.missouri.edu/hymenopteramine"
+MINE_URL = "https://hymenopteramine.rnet.missouri.edu/hymenopteramine"
 
 
 def get_API_key():
@@ -35,12 +35,12 @@ def main():
     print("HymenopteraMine templates demo\n")
     print("This example shows how to run the template query:"
         + "'Gene ID -> Homologues'")
-    print("See details at:", HMINE_URL + "/template.do?name=Gene_Orthologues")
+    print("See details at:", MINE_URL + "/template.do?name=Gene_Orthologues")
 
     # Uncomment below to use API key (recommended)
-    #service = Service(HMINE_URL, token=get_API_key())
+    #service = Service(MINE_URL, token=get_API_key())
     # Comment out below if using API key above
-    service = Service(HMINE_URL)
+    service = Service(MINE_URL)
 
     template = service.get_template('Gene_Orthologues')
 

@@ -9,21 +9,44 @@ More details on the region search, including the formats allowed for the genome
 coordinates, can be found here:
 https://aquamine.rnet.missouri.edu/aquamine/genomicRegionSearch.do
 
-For this demo, the search results are stored as 2D arrays, displayed as a 
-table, grouped by region. Each row is a feature, and the columns are the 
-feature attributes: primary identifier and symbol, type, location.
+For this demo, the search results are displayed as a table, grouped by region.
+The results are also stored as a list of results Rows for further processing. In that
+case, displaying the query results can be disabled by passing displayOutput=false to 
+region_search().
 """
 
-import sys
+import os, sys
+from dotenv import load_dotenv
+from intermine.webservice import Service
 sys.path.append("..")
 from region_search_default.region_search_default import region_search
 
-AQUAMINE_URL = "https://aquamine.rnet.missouri.edu/aquamine"
+MINE_URL = "https://aquamine.rnet.missouri.edu/aquamine"
 
+
+def get_API_key():
+    """Get API key from .env file.
+
+    Returns
+    -------
+    str
+        API key loaded from file
+    """
+
+    if(not load_dotenv()):
+        raise OSError("Unable to load API key; make sure .env file exists")
+
+    return os.getenv('API_KEY')
+    
 
 def main():
     print("AquaMine region search demo\n")
     printSpacer()
+    
+    # Uncomment below to use API key (recommended)
+    #service = Service(MINE_URL, token=get_API_key())
+    # Comment out below if using API key above
+    service = Service(MINE_URL)
 
     #--------------------------------------------------------------------------
     # Example 1
@@ -42,7 +65,24 @@ def main():
     # for details on accepted region string formats
     regions = ["1:4973300..4990880", "3:5078530..5082200"]
 
-    region_search(AQUAMINE_URL, org, features, regions)
+    results = region_search(service, org, features, regions)
+
+    # Further processing examples:
+    # Retrieve list of all primary identifiers from results:
+    primaryIds = [row["primaryIdentifier"] for row in results]
+    # Retreive list of gene ids from results:
+    geneIds = [row["primaryIdentifier"] for row in results if \
+               row["SequenceFeature.sequenceOntologyTerm.name"] == "gene"]
+    print("List of gene ids: " + ','.join(geneIds))
+    # Retrieve only RefSeq gene ids:
+    geneIds = [row["primaryIdentifier"] for row in results if \
+               row["SequenceFeature.sequenceOntologyTerm.name"] == "gene" \
+               and row["source"] == "RefSeq"]
+    print("List of RefSeq gene ids: " + ','.join(geneIds))
+    # Remove duplicates if any:
+    geneIds = list(set(geneIds))
+    print("List of unique RefSeq gene ids: " + ','.join(geneIds)) 
+
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -55,7 +95,7 @@ def main():
     # Selected assembly
     assembly = "USDA_OmyKA_1.1"
 
-    region_search(AQUAMINE_URL, org, features, regions, assembly)
+    results = region_search(service, org, features, regions, assembly)
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -70,8 +110,8 @@ def main():
     # Could either use assembly specified above, or set assembly=None to search 
     # across all assemblies (for AquaMine it doesn't matter; the results 
     # will be the same):
-    region_search(AQUAMINE_URL, org, features, regions, assembly, extend)
-    #region_search(AQUAMINE_URL, org, features, regions, None, extend)
+    results = region_search(service, org, features, regions, assembly, extend)
+    #results = region_search(service, org, features, regions, None, extend)
     printSpacer()
 
     #--------------------------------------------------------------------------
@@ -79,12 +119,14 @@ def main():
     print("Example 4: Perform a strand-specific search on a single region.\n")
 
     # Strand: +
-    region_search(AQUAMINE_URL, org, features, regions, assembly, 0, True)
+    results = region_search(service, org, features, regions, assembly, 0, True)
 
     # Strand: -
     features = ["Exon", "Gene", "MRNA", "LncRNA"]
     regions = ["1:4990900..4943500"]
-    region_search(AQUAMINE_URL, org, features, regions, assembly, 0, True)
+    results = region_search(service, org, features, regions, assembly, 0, True)
+    # Set printOutput=False to skip printing results to screen, for example:
+    #results = region_search(service, org, features, regions, assembly, 0, True, False)
 
 
 def printSpacer():

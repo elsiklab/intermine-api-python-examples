@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-"""Genomic region search for HymenopteraMine
+"""Genomic region search for BovineMine
 
 This script uses the InterMine API to programmatically search for features 
 within genomic regions for a specified organism (and optionally, assembly).
 
 More details on the region search, including the formats allowed for the genome 
 coordinates, can be found here:
-https://hymenopteramine.rnet.missouri.edu/hymenopteramine/genomicRegionSearch.do
+https://bovinemine.rnet.missouri.edu/bovinemine/genomicRegionSearch.do
 
 For this demo, the search results are displayed as a table, grouped by region.
 The results are also stored as a list of results Rows for further processing. In that
@@ -21,7 +21,7 @@ from intermine.webservice import Service
 sys.path.append("..")
 from region_search_default.region_search_default import region_search
 
-MINE_URL = "https://hymenopteramine.rnet.missouri.edu/hymenopteramine"
+MINE_URL = "https://bovinemine.rnet.missouri.edu/bovinemine"
 
 
 def get_API_key():
@@ -40,7 +40,7 @@ def get_API_key():
 
 
 def main():
-    print("HymenopteraMine region search demo\n")
+    print("BovineMine region search demo\n")
     printSpacer()
 
     # Uncomment below to use API key (recommended)
@@ -51,19 +51,19 @@ def main():
     #--------------------------------------------------------------------------
     # Example 1
     print("Example 1: Simple region search\n")
-    print("Search for A. mellifera features of type exon, gene, or mRNA")
+    print("Search for Bos taurus features of type exon, gene, or mRNA")
     print("within specified regions (given as a list of strings in the form")
     print("'chromosome:start..end').\n")
     
-    # Selected organism
-    org = "Apis mellifera"
+    # Selected organism name
+    org = "Bos taurus"
     # Selected feature types (as list of strings)
     # See get_feature_class_names.py for list of feature class names
     features = ["Exon", "Gene", "MRNA"]
     # Selected regions (as list of strings)
-    # See http://hymenopteragenome.org/hymenopteramine/genomicRegionSearch.do 
+    # See https://bovinemine.rnet.missouri.edu/bovinemine/genomicRegionSearch.do
     # for details on accepted region string formats
-    regions = ["LG5:900000..930000", "LG5:950000..980000"]
+    regions = ["6:33773500..33776050", "12:18405000..18474500", "20:29154700..29170000"]
 
     results = region_search(service, org, features, regions)
 
@@ -78,7 +78,7 @@ def main():
     geneIds = [row["primaryIdentifier"] for row in results if \
                row["SequenceFeature.sequenceOntologyTerm.name"] == "gene" \
                and row["source"] == "RefSeq"]
-    print("List of RefSeq gene ids: " + ','.join(geneIds))    
+    print("List of RefSeq gene ids: " + ','.join(geneIds))
     # Remove duplicates if any:
     geneIds = list(set(geneIds))
     print("List of unique RefSeq gene ids: " + ','.join(geneIds)) 
@@ -87,46 +87,31 @@ def main():
 
     #--------------------------------------------------------------------------
     # Example 2
-    print("Example 2: Add assembly to the region search (optional)\n")
-    print("Repeat the search in the example above, restricting to a specified")
-    print("assembly.\n(For reference only; currently in HymenopteraMine each")
-    print("organism only has one assembly loaded.)\n")
-    
-    # Selected assembly
-    assembly = "Amel_HAv3.1"
-
-    results = region_search(service, org, features, regions, assembly)
-    printSpacer()
-
-    #--------------------------------------------------------------------------
-    # Example 3
-    print("Example 3: Extend each region at both sides (optional)\n")
+    print("Example 2: Extend each region at both sides (optional)\n")
     print("Repeat the search in Example 1, extending the regions at both")
     print("sides by a specified amount (given as an integer).\n")
 
     # Extend regions by this amount:
     extend = 30000
 
-    # Could either use assembly specified above, or set assembly=None to search 
-    # across all assemblies (for HymenopteraMine it doesn't matter; the results 
-    # will be the same):
-    results = region_search(service, org, features, regions, assembly, extend)
-    #results = region_search(service, org, features, regions, None, extend)
+    # Only one assembly in BovineMine so using 'None' for assembly param to search all
+    results = region_search(service, org, features, regions, None, extend)
+
     printSpacer()
 
     #--------------------------------------------------------------------------
-    # Example 4
-    print("Example 4: Perform a strand-specific search on a single region.\n")
+    # Example 3
+    print("Example 3: Perform a strand-specific search on a single region.\n")
 
-    # Strand: +
-    results = region_search(service, org, features, regions, assembly, 0, True)
+    # Example with strand: +
+    results = region_search(service, org, features, regions, None, 0, True)
 
-    # Strand: -
+    # Example with strand: -
     features = ["Exon", "Gene", "MRNA", "LncRNA"]
-    regions = ["LG5:980000..820000"]
-    results = region_search(service, org, features, regions, assembly, 0, True)
+    regions = ["1:240000..120000"]
+    results = region_search(service, org, features, regions, None, 0, True)
     # Set printOutput=False to skip printing results to screen, for example:
-    #results = region_search(service, org, features, regions, assembly, 0, True, False)
+    #results = region_search(service, org, features, regions, None, 0, True, False)
 
 
 def printSpacer():
